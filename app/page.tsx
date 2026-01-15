@@ -31,6 +31,178 @@ const STORAGE_KEY = "workboard-daily-tasks";
 
 const now = () => new Date().toLocaleString();
 
+function generateSampleData(): DailyBoard {
+  const today = new Date();
+  const todayKey = getDateKey(today);
+  
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = getDateKey(yesterday);
+  
+  const twoDaysAgo = new Date(today);
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  const twoDaysAgoKey = getDateKey(twoDaysAgo);
+  
+  const threeDaysAgo = new Date(today);
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  const threeDaysAgoKey = getDateKey(threeDaysAgo);
+
+  const formatDate = (date: Date) => date.toLocaleString();
+
+  return {
+    [threeDaysAgoKey]: [
+      {
+        id: "sample-1",
+        title: "Design new logo concepts",
+        person: "Wizard",
+        notes: "Need 3 variations",
+        status: "done",
+        updatedAt: formatDate(threeDaysAgo),
+        date: threeDaysAgoKey,
+        continued: false,
+      },
+      {
+        id: "sample-2",
+        title: "Review vendor contracts",
+        person: "T",
+        status: "blocked",
+        updatedAt: formatDate(threeDaysAgo),
+        date: threeDaysAgoKey,
+        continued: false,
+      },
+    ],
+    [twoDaysAgoKey]: [
+      {
+        id: "sample-2-carried-" + twoDaysAgoKey,
+        title: "Review vendor contracts",
+        person: "T",
+        status: "blocked",
+        updatedAt: formatDate(twoDaysAgo),
+        date: twoDaysAgoKey,
+        continued: true,
+      },
+      {
+        id: "sample-3",
+        title: "Update product descriptions",
+        person: "CS",
+        notes: "Focus on SEO keywords",
+        status: "doing",
+        updatedAt: formatDate(twoDaysAgo),
+        date: twoDaysAgoKey,
+        continued: false,
+      },
+      {
+        id: "sample-4",
+        title: "Send weekly newsletter",
+        person: "Marketing",
+        status: "done",
+        updatedAt: formatDate(twoDaysAgo),
+        date: twoDaysAgoKey,
+        continued: false,
+      },
+    ],
+    [yesterdayKey]: [
+      {
+        id: "sample-2-carried-" + yesterdayKey,
+        title: "Review vendor contracts",
+        person: "T",
+        status: "help",
+        updatedAt: formatDate(yesterday),
+        date: yesterdayKey,
+        continued: true,
+      },
+      {
+        id: "sample-3-carried-" + yesterdayKey,
+        title: "Update product descriptions",
+        person: "CS",
+        notes: "Focus on SEO keywords",
+        status: "doing",
+        updatedAt: formatDate(yesterday),
+        date: yesterdayKey,
+        continued: true,
+      },
+      {
+        id: "sample-5",
+        title: "Prepare Q1 report",
+        person: "Finance",
+        status: "done",
+        updatedAt: formatDate(yesterday),
+        date: yesterdayKey,
+        continued: false,
+      },
+      {
+        id: "sample-6",
+        title: "Fix checkout bug",
+        person: "Dev",
+        notes: "Payment gateway timeout issue",
+        status: "blocked",
+        updatedAt: formatDate(yesterday),
+        date: yesterdayKey,
+        continued: false,
+      },
+    ],
+    [todayKey]: [
+      {
+        id: "sample-2-carried-" + todayKey,
+        title: "Review vendor contracts",
+        person: "T",
+        status: "help",
+        updatedAt: formatDate(today),
+        date: todayKey,
+        continued: true,
+      },
+      {
+        id: "sample-3-carried-" + todayKey,
+        title: "Update product descriptions",
+        person: "CS",
+        notes: "Focus on SEO keywords",
+        status: "doing",
+        updatedAt: formatDate(today),
+        date: todayKey,
+        continued: true,
+      },
+      {
+        id: "sample-6-carried-" + todayKey,
+        title: "Fix checkout bug",
+        person: "Dev",
+        notes: "Payment gateway timeout issue",
+        status: "doing",
+        updatedAt: formatDate(today),
+        date: todayKey,
+        continued: true,
+      },
+      {
+        id: "sample-7",
+        title: "DNGR website edits",
+        person: "Wizard",
+        status: "doing",
+        updatedAt: formatDate(today),
+        date: todayKey,
+        continued: false,
+      },
+      {
+        id: "sample-8",
+        title: "Approve packaging colors",
+        person: "T",
+        status: "blocked",
+        updatedAt: formatDate(today),
+        date: todayKey,
+        continued: false,
+      },
+      {
+        id: "sample-9",
+        title: "Reply to customer emails",
+        person: "CS",
+        notes: "Refund + address changes",
+        status: "help",
+        updatedAt: formatDate(today),
+        date: todayKey,
+        continued: false,
+      },
+    ],
+  };
+}
+
 const getDateKey = (date: Date = new Date()) => {
   return date.toISOString().split("T")[0];
 };
@@ -168,6 +340,12 @@ function getInitialState(): { todayKey: string; dateLabel: string; dailyBoards: 
     } catch {
       boards = {};
     }
+  }
+  
+  if (Object.keys(boards).length === 0) {
+    boards = generateSampleData();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(boards));
+    return { todayKey: currentDateKey, dateLabel: label, dailyBoards: boards };
   }
 
   const existingTodayTasks = boards[currentDateKey] || [];
