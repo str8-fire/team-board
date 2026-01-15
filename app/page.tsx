@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import styles from "./page.module.css";
 
 type Status = "doing" | "blocked" | "help" | "done";
@@ -28,7 +28,6 @@ const COLUMNS: { key: Status; title: string }[] = [
 ];
 
 const STORAGE_KEY = "workboard-daily-tasks";
-const ACTIVITY_KEY = "workboard-last-activity";
 
 const now = () => new Date().toLocaleString();
 
@@ -224,14 +223,9 @@ const todayLabel = () =>
     day: "numeric",
   });
 
-type Activity = {
-  message: string;
-  at: string;
-};
-
 const formatRelativeTime = (dateString: string) => {
   const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "";
+  if (isNaN(date.getTime())) return "";
 
   const nowDate = new Date();
   const diffMs = nowDate.getTime() - date.getTime();
@@ -270,213 +264,72 @@ function TaskCard({
   onEdit: (id: string, updates: { title: string; person: string; notes?: string }) => void;
   readOnly?: boolean;
 }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [notesExpanded, setNotesExpanded] = useState(false);
-  const [notesTruncated, setNotesTruncated] = useState(false);
-  const [editTitle, setEditTitle] = useState(task.title);
-  const [editPerson, setEditPerson] = useState(task.person);
-  const [editNotes, setEditNotes] = useState(task.notes || "");
-  const notesRef = React.useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isEditing) {
-      setEditTitle(task.title);
-      setEditPerson(task.person);
-      setEditNotes(task.notes || "");
-    }
-  }, [task, isEditing]);
-
-  useEffect(() => {
-    if (!isEditing) {
-      setConfirmingDelete(false);
-    }
-  }, [isEditing]);
-
-  useEffect(() => {
-    const el = notesRef.current;
-    if (!el) {
-      setNotesTruncated(false);
-      return;
-    }
-
-    const updateTruncation = () => {
-      const isTruncated = el.scrollWidth > el.clientWidth + 1;
-      setNotesTruncated(isTruncated);
-    };
-
-    updateTruncation();
-
-    const observer = new ResizeObserver(updateTruncation);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [task.notes, notesExpanded, isEditing]);
-
-  const canSave = editTitle.trim().length > 0 && editPerson.trim().length > 0;
-
   return (
     <div className={`${styles.task} ${readOnly ? styles.taskReadOnly : ""}`}>
-      {isEditing ? (
-        <div className={styles.editForm} aria-label="Edit task">
-          <input
-            className={styles.editInput}
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            placeholder="Task title"
-            aria-label="Task title"
-          />
+      <div className={styles.taskTitle}>
+        {task.continued && <span className={styles.continuedTag}>(continued) </span>}
+        {task.title}
+      </div>
 
-          <input
-            className={styles.editInput}
-            value={editPerson}
-            onChange={(e) => setEditPerson(e.target.value)}
-            placeholder="Assigned to"
-            aria-label="Assigned to"
-          />
+      <div className={styles.taskMeta}>
+        <span style={{ fontWeight: 700 }}>{task.person}</span>
+        <span style={{ opacity: 0.7 }} title={task.updatedAt}>
+          {" "}
+          • {formatRelativeTime(task.updatedAt)}
+        </span>
+      </div>
 
-          <textarea
-            className={styles.editTextarea}
-            value={editNotes}
-            onChange={(e) => setEditNotes(e.target.value)}
-            placeholder="Notes (optional)"
-            aria-label="Notes"
-            rows={2}
-          />
-        </div>
-      ) : (
-        <>
-          <div className={styles.taskTitle}>
-            {task.continued && <span className={styles.continuedTag}>(continued) </span>}
-            {task.title}
-          </div>
-
-          <div className={styles.taskMeta}>
-            <span style={{ fontWeight: 700 }}>{task.person}</span>
-            <span style={{ opacity: 0.7 }} title={task.updatedAt}>
-              {" "}
-              • {formatRelativeTime(task.updatedAt)}
-            </span>
-          </div>
-
-          {task.notes ? (
-            <div className={styles.taskNotesWrap}>
-              <div
-                className={`${styles.taskNotes} ${notesExpanded ? styles.taskNotesExpanded : ""}`}
-                ref={notesRef}
-                onDoubleClick={() => {
-                  if (!notesTruncated && !notesExpanded) return;
-                  setNotesExpanded((prev) => !prev);
-                }}
-                role="button"
-                tabIndex={0}
-                aria-expanded={notesExpanded}
-              >
-                {task.notes}
-              </div>
-              {(notesTruncated || notesExpanded) && (
-                <button
-                  type="button"
-                  className={styles.taskNotesToggle}
-                  onClick={() => setNotesExpanded((prev) => !prev)}
-                  aria-expanded={notesExpanded}
-                >
-                  {notesExpanded ? "Show less" : "Show more"}
-                </button>
-              )}
-            </div>
-          ) : null}
-        </>
-      )}
+      {task.notes ? <div className={styles.taskNotes}>{task.notes}</div> : null}
 
       {!readOnly && (
         <div className={styles.taskActions}>
-          {confirmingDelete ? (
-            <>
-              <button
-                onClick={() => {
-                  setConfirmingDelete(false);
-                }}
-                className={`${styles.taskButton} ${styles.taskButtonSecondary}`}
-                title="Cancel delete"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={() => {
-                  onDelete(task.id);
-                  setConfirmingDelete(false);
-                }}
-                className={`${styles.taskButton} ${styles.taskButtonDanger}`}
-                title="Confirm delete"
-              >
-                Confirm Delete
-              </button>
-            </>
-          ) : isEditing ? (
-            <>
-              <button
-                onClick={() => {
-                  if (!canSave) return;
-                  onEdit(task.id, {
-                    title: editTitle.trim(),
-                    person: editPerson.trim(),
-                    notes: editNotes.trim() ? editNotes.trim() : undefined,
-                  });
-                  setIsEditing(false);
-                }}
-                className={`${styles.taskButton} ${styles.taskButtonPrimary}`}
-                title="Save changes"
-                disabled={!canSave}
-              >
-                Save
-              </button>
-
-              <button
-                onClick={() => {
-                  setIsEditing(false);
-                }}
-                className={`${styles.taskButton} ${styles.taskButtonSecondary}`}
-                title="Cancel editing"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <>
-              {(["doing", "blocked", "help", "done"] as Status[]).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => onMove(task.id, s)}
-                  disabled={task.status === s}
-                  className={`${styles.taskButton} ${task.status === s ? styles.taskButtonActive : ""}`}
-                  title={`Move to ${s}`}
-                >
-                  {s === "doing" ? "Doing" : s === "blocked" ? "Blocked" : s === "help" ? "Need Help" : "Done"}
-                  </button>
-                ))}
-
-              {task.status !== "done" && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className={`${styles.taskButton}`}
-                  title="Edit task"
-                >
-                  Edit
-                </button>
-              )}
-            </>
-          )}
-
-          {!isEditing && !confirmingDelete && (
+          {(["doing", "blocked", "help", "done"] as Status[]).map((s) => (
             <button
-              onClick={() => setConfirmingDelete(true)}
-              className={`${styles.taskButton} ${styles.deleteButton}`}
-              title="Delete task"
+              key={s}
+              onClick={() => onMove(task.id, s)}
+              disabled={task.status === s}
+              className={`${styles.taskButton} ${task.status === s ? styles.taskButtonActive : ""}`}
+              title={`Move to ${s}`}
             >
-              Delete
+              {s === "doing" ? "Doing" : s === "blocked" ? "Blocked" : s === "help" ? "Need Help" : "Done"}
             </button>
-          )}
+          ))}
+
+          <button
+            onClick={() => {
+              const nextTitle = window.prompt("Edit task title:", task.title);
+              if (nextTitle === null) return;
+              const cleanTitle = nextTitle.trim();
+              if (!cleanTitle) return;
+
+              const nextPerson = window.prompt("Edit assigned to:", task.person);
+              if (nextPerson === null) return;
+              const cleanPerson = nextPerson.trim();
+              if (!cleanPerson) return;
+
+              const nextNotes = window.prompt("Edit notes (optional):", task.notes || "");
+              if (nextNotes === null) return;
+              const cleanNotes = nextNotes.trim();
+
+              onEdit(task.id, {
+                title: cleanTitle,
+                person: cleanPerson,
+                notes: cleanNotes ? cleanNotes : undefined,
+              });
+            }}
+            className={`${styles.taskButton}`}
+            title="Edit task"
+          >
+            Edit
+          </button>
+
+          <button
+            onClick={() => onDelete(task.id)}
+            className={`${styles.taskButton} ${styles.deleteButton}`}
+            title="Delete task"
+          >
+            Delete
+          </button>
         </div>
       )}
     </div>
@@ -586,17 +439,6 @@ function getInitialState(): { todayKey: string; dateLabel: string; dailyBoards: 
   return { todayKey: currentDateKey, dateLabel: label, dailyBoards: boards };
 }
 
-function getInitialActivity(): Activity | null {
-  if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem(ACTIVITY_KEY);
-  if (!stored) return null;
-  try {
-    return JSON.parse(stored) as Activity;
-  } catch {
-    return null;
-  }
-}
-
 export default function Home() {
   const [state, setState] = useState<{ todayKey: string; dateLabel: string; dailyBoards: DailyBoard }>({
     todayKey: "",
@@ -605,15 +447,10 @@ export default function Home() {
   });
   const [showHistorical, setShowHistorical] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
-  const [filterPerson, setFilterPerson] = useState("all");
-  const [filterOpen, setFilterOpen] = useState(false);
 
   const [title, setTitle] = useState("");
   const [person, setPerson] = useState("");
   const [notes, setNotes] = useState("");
-  const titleInputRef = useRef<HTMLInputElement | null>(null);
-  const personInputRef = useRef<HTMLInputElement | null>(null);
-  const [lastActivity, setLastActivity] = useState<Activity | null>(null);
 
   const { todayKey, dateLabel, dailyBoards } = state;
 
@@ -621,39 +458,11 @@ export default function Home() {
     return dailyBoards[todayKey] || [];
   }, [dailyBoards, todayKey]);
 
-  const allPeople = useMemo(() => {
-    const people = new Set<string>();
-    Object.values(dailyBoards).forEach((tasks) => {
-      tasks.forEach((task) => {
-        if (task.person) people.add(task.person);
-      });
-    });
-    return Array.from(people).sort((a, b) => a.localeCompare(b));
-  }, [dailyBoards]);
-
-  const filterTasks = (tasks: Task[]) => {
-    if (filterPerson === "all") return tasks;
-    return tasks.filter((task) => task.person === filterPerson);
-  };
-
   const grouped = useMemo(() => {
     const map: Record<Status, Task[]> = { doing: [], blocked: [], help: [], done: [] };
-    for (const t of filterTasks(todayTasks)) map[t.status].push(t);
+    for (const t of todayTasks) map[t.status].push(t);
     return map;
-  }, [todayTasks, filterPerson]);
-
-  const todaySummary = useMemo(() => {
-    const allToday = dailyBoards[todayKey] || [];
-    const total = allToday.length;
-    const blocked = allToday.filter((t) => t.status === "blocked").length;
-    const help = allToday.filter((t) => t.status === "help").length;
-    const done = allToday.filter((t) => t.status === "done").length;
-    const active = Math.max(total - done, 0);
-    if (total === 0) {
-      return "Today's focus: 0 tasks";
-    }
-    return `Today's focus: ${active} active · ${blocked} blocked · ${help} needs help · ${done} completed`;
-  }, [dailyBoards, todayKey]);
+  }, [todayTasks]);
 
   const historicalDates = useMemo(() => {
     return Object.keys(dailyBoards)
@@ -666,7 +475,6 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState(initialState);
     setHasMounted(true);
-    setLastActivity(getInitialActivity());
   }, []);
 
   useEffect(() => {
@@ -675,23 +483,10 @@ export default function Home() {
     }
   }, [dailyBoards, hasMounted, todayKey]);
 
-  const setActivity = (message: string) => {
-    const activity = { message, at: now() };
-    setLastActivity(activity);
-    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activity));
-  };
-
   function addTask() {
     const cleanTitle = title.trim();
     const cleanPerson = person.trim();
-    if (!cleanTitle) {
-      titleInputRef.current?.focus();
-      return;
-    }
-    if (!cleanPerson) {
-      personInputRef.current?.focus();
-      return;
-    }
+    if (!cleanTitle || !cleanPerson) return;
 
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -711,14 +506,12 @@ export default function Home() {
         [todayKey]: [newTask, ...(prev.dailyBoards[todayKey] || [])],
       },
     }));
-    setActivity(`${cleanPerson} added "${cleanTitle}"`);
     setTitle("");
     setPerson("");
     setNotes("");
   }
 
   function moveTask(id: string, status: Status) {
-    const task = (dailyBoards[todayKey] || []).find((t) => t.id === id);
     setState((prev) => ({
       ...prev,
       dailyBoards: {
@@ -728,15 +521,9 @@ export default function Home() {
         ),
       },
     }));
-    if (task && task.status !== status) {
-      const statusLabel =
-        status === "doing" ? "Doing" : status === "blocked" ? "Blocked" : status === "help" ? "Need Help" : "Completed";
-      setActivity(`${task.person} moved "${task.title}" to ${statusLabel}`);
-    }
   }
 
   function deleteTask(id: string) {
-    const task = (dailyBoards[todayKey] || []).find((t) => t.id === id);
     setState((prev) => ({
       ...prev,
       dailyBoards: {
@@ -744,9 +531,6 @@ export default function Home() {
         [todayKey]: (prev.dailyBoards[todayKey] || []).filter((t) => t.id !== id),
       },
     }));
-    if (task) {
-      setActivity(`${task.person} deleted "${task.title}"`);
-    }
   }
 
   function editTask(id: string, updates: { title: string; person: string; notes?: string }) {
@@ -774,89 +558,19 @@ export default function Home() {
           <div className={styles.badge}>Internal</div>
         </div>
 
-        <div>
-          <div className={styles.subtitle}>Shared view of current work, blockers, and help needed.</div>
-          <div className={styles.contextBar}>
-            <div className={styles.contextPrimary}>{todaySummary}</div>
-            <div className={styles.contextSecondary}>
-              {lastActivity
-                ? `Last update: ${lastActivity.message} · ${formatRelativeTime(lastActivity.at)}`
-                : "Last update: No recent activity"}
-            </div>
-          </div>
-        </div>
+        <div className={styles.subtitle}>Shared view of current work, blockers, and help needed.</div>
       </div>
 
       {/* Date row */}
       <div className={styles.dateRow}>
+        <button
+          type="button"
+          className={`${styles.archiveToggle} ${showHistorical ? styles.archiveToggleActive : ""}`}
+          onClick={() => setShowHistorical(!showHistorical)}
+        >
+          {showHistorical ? "Hide" : "Show"} Historical Tasks ({historicalDates.length})
+        </button>
         <span className={styles.dateLabel}>{dateLabel}</span>
-        <div className={styles.dateActions}>
-          <div className={styles.filterWrap}>
-            <button
-              type="button"
-              className={`${styles.filterButton} ${filterPerson !== "all" ? styles.filterButtonActive : ""}`}
-              onClick={() => setFilterOpen((prev) => !prev)}
-              aria-expanded={filterOpen}
-              aria-haspopup="listbox"
-            >
-              <svg
-                className={styles.filterIcon}
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <path
-                  d="M4 5h16l-6.5 7v5.5l-3 1.5V12L4 5z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className={styles.filterLabel}>
-                {filterPerson === "all" ? "Filter" : filterPerson}
-              </span>
-            </button>
-            {filterOpen && (
-              <div className={styles.filterMenu} role="listbox">
-                <button
-                  type="button"
-                  className={styles.filterOption}
-                  onClick={() => {
-                    setFilterPerson("all");
-                    setFilterOpen(false);
-                  }}
-                >
-                  All
-                </button>
-                {allPeople.map((personName) => (
-                  <button
-                    key={personName}
-                    type="button"
-                    className={styles.filterOption}
-                    onClick={() => {
-                      setFilterPerson(personName);
-                      setFilterOpen(false);
-                    }}
-                  >
-                    {personName}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button
-            type="button"
-            className={`${styles.archiveToggle} ${showHistorical ? styles.archiveToggleActive : ""}`}
-            onClick={() => setShowHistorical(!showHistorical)}
-            aria-pressed={showHistorical}
-          >
-            <span className={styles.archiveLabel}>Show History</span>
-            <span className={styles.archiveSwitch} aria-hidden="true">
-              <span className={styles.archiveSwitchThumb} />
-            </span>
-          </button>
-        </div>
       </div>
 
       {/* Board */}
@@ -882,29 +596,22 @@ export default function Home() {
             <HistoricalDaySection
               key={dateKey}
               dateKey={dateKey}
-              tasks={filterTasks(dailyBoards[dateKey])}
+              tasks={dailyBoards[dateKey]}
             />
           ))}
         </div>
       )}
 
       {/* Add task section (lower like your mock) */}
-      <div className={styles.addSection} id="add-task">
+      <div className={styles.addSection}>
         <h2 className={styles.addTitle}>Add a Task:</h2>
 
-        <form
-          className={styles.addForm}
-          onSubmit={(e) => {
-            e.preventDefault();
-            addTask();
-          }}
-        >
+        <div className={styles.addForm}>
           <input
             className={styles.input}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Task title (e.g., Update hoodie mockups)"
-            ref={titleInputRef}
           />
 
           <input
@@ -912,7 +619,6 @@ export default function Home() {
             value={person}
             onChange={(e) => setPerson(e.target.value)}
             placeholder="Assigned to (e.g., Wizard)"
-            ref={personInputRef}
           />
 
           <div className={styles.addRow}>
@@ -922,29 +628,12 @@ export default function Home() {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Notes (optional)"
             />
-            <button className={styles.button} type="submit">
+            <button className={styles.button} onClick={addTask}>
               Add
             </button>
           </div>
-        </form>
+        </div>
       </div>
-
-      <button
-        type="button"
-        className={styles.fab}
-        aria-label="Add new task"
-        onClick={() => {
-          const target = document.getElementById("add-task");
-          if (target) {
-            target.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-          window.setTimeout(() => {
-            titleInputRef.current?.focus();
-          }, 250);
-        }}
-      >
-        +
-      </button>
     </main>
   );
 }
