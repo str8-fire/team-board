@@ -30,14 +30,14 @@ const todayLabel = () =>
   });
 
 const initialTasks: Task[] = [
-  { id: "1", title: "DNGR website edits", person: "Wizard", status: "doing", updatedAt: now() },
-  { id: "2", title: "Approve packaging colors", person: "T", status: "blocked", updatedAt: now() },
+  { id: "1", title: "DNGR website edits", person: "Wizard", status: "doing", updatedAt: "" },
+  { id: "2", title: "Approve packaging colors", person: "T", status: "blocked", updatedAt: "" },
   {
     id: "3",
     title: "Reply to customer emails",
     person: "CS",
     status: "help",
-    updatedAt: now(),
+    updatedAt: "",
     notes: "Refund + address changes",
   },
 ];
@@ -98,6 +98,7 @@ function TaskCard({
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [dateLabel, setDateLabel] = useState("");
 
   const [title, setTitle] = useState("");
   const [person, setPerson] = useState("");
@@ -137,6 +138,13 @@ export default function Home() {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }
 
+  React.useEffect(() => {
+    setDateLabel(todayLabel());
+    setTasks((prev) =>
+      prev.map((t) => (t.updatedAt ? t : { ...t, updatedAt: now() })),
+    );
+  }, []);
+
   return (
     <main className={styles.page}>
       {/* Top header area */}
@@ -154,7 +162,12 @@ export default function Home() {
       </div>
 
       {/* Date row */}
-      <div className={styles.dateRow}>Today: {todayLabel()}</div>
+      <div className={styles.dateRow}>
+        <button type="button" className={styles.archiveToggle}>
+          Archived (clickable to show/ hide)
+        </button>
+        <span className={styles.dateLabel}>{dateLabel}</span>
+      </div>
 
       {/* Board */}
       <div className={styles.board}>

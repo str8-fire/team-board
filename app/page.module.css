@@ -38,6 +38,24 @@
   margin-top: 54px;
   font-size: 36px;
   opacity: 0.92;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.archiveToggle {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+.dateLabel {
+  font-weight: 700;
 }
 
 /* Board: centered row of 4 columns with nice spacing */
