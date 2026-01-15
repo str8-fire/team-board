@@ -210,3 +210,68 @@
   font-weight: 700;
   white-space: nowrap;
 }
+
+/* Historical tasks toggle active state */
+.archiveToggleActive {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 700;
+}
+
+/* Continued tag for carried-over tasks */
+.continuedTag {
+  color: #f59e0b;
+  font-weight: 600;
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+/* Read-only task styling */
+.taskReadOnly {
+  opacity: 0.7;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Historical section */
+.historicalSection {
+  margin-top: 60px;
+  padding-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.historicalTitle {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+
+/* Historical day section */
+.historicalDay {
+  margin-bottom: 40px;
+}
+
+.historicalDateLabel {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  opacity: 0.75;
+}
+
+.historicalBoard {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .historicalBoard {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .historicalBoard {
+    grid-template-columns: 1fr;
+  }
+}
