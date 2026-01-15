@@ -1,5 +1,5 @@
 .page {
-  padding: 44px 56px;
+  padding: 18px 40px;
   max-width: 1500px;
   margin: 0 auto;
 }
@@ -7,13 +7,13 @@
 /* Top area: title on left, subtitle to the right */
 .top {
   display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 36px;
+  grid-template-columns: 280px 1fr;
+  gap: 18px;
   align-items: start;
 }
 
 .title {
-  font-size: 64px;
+  font-size: 58px;
   line-height: 0.95;
   margin: 0;
   font-weight: 800;
@@ -26,16 +26,37 @@
 }
 
 .subtitle {
-  margin-top: 10px;
-  max-width: 520px;
+  margin-top: 6px;
+  max-width: 560px;
   opacity: 0.8;
   font-size: 16px;
   line-height: 1.5;
 }
 
+.contextBar {
+  margin-top: 42px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  align-items: center;
+}
+
+.contextPrimary {
+  font-size: 22px;
+  opacity: 0.76;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Palatino", "Book Antiqua", serif;
+}
+
+.contextSecondary {
+  font-size: 19px;
+  opacity: 0.6;
+  font-style: italic;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Palatino", "Book Antiqua", serif;
+}
+
 /* Middle: date row */
 .dateRow {
-  margin-top: 54px;
+  margin-top: 28px;
   font-size: 36px;
   opacity: 0.92;
   display: flex;
@@ -50,8 +71,16 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  opacity: 0.9;
+  opacity: 0.92;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  transition: opacity 160ms ease;
+}
+
+.archiveToggle:hover {
+  opacity: 1;
 }
 
 .dateLabel {
@@ -60,7 +89,7 @@
 
 /* Board: centered row of 4 columns with nice spacing */
 .board {
-  margin-top: 26px;
+  margin-top: 18px;
   display: grid;
   grid-template-columns: repeat(4, minmax(240px, 1fr));
   gap: 22px;
@@ -135,6 +164,36 @@
   margin-top: 8px;
   opacity: 0.75;
   font-size: 14px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.taskNotesWrap {
+  display: grid;
+  gap: 6px;
+}
+
+.taskNotesExpanded {
+  white-space: normal;
+  overflow: visible;
+}
+
+
+.taskNotesToggle {
+  align-self: start;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  opacity: 0.55;
+  cursor: pointer;
+  padding: 0;
+}
+
+.taskNotesToggle:hover {
+  opacity: 0.85;
 }
 
 .taskActions {
@@ -144,20 +203,63 @@
   margin-top: 10px;
 }
 
+.editForm {
+  display: grid;
+  gap: 8px;
+}
+
+.editInput,
+.editTextarea {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  width: 100%;
+}
+
+.editTextarea {
+  resize: vertical;
+  min-height: 44px;
+}
+
 .taskButton {
   padding: 6px 10px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
+  opacity: 0.6;
+  transition: opacity 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.taskButton:hover {
   opacity: 0.9;
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .taskButtonActive {
   background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
   cursor: default;
   opacity: 1;
+}
+
+.taskButtonPrimary {
+  background: rgba(255, 255, 255, 0.18);
+  font-weight: 700;
+}
+
+.taskButtonSecondary {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.taskButtonDanger {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.18);
+  color: rgba(255, 220, 220, 0.95);
 }
 
 .deleteButton {
@@ -211,10 +313,151 @@
   white-space: nowrap;
 }
 
+.fab {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.fab:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 /* Historical tasks toggle active state */
 .archiveToggleActive {
-  background: rgba(255, 255, 255, 0.1);
   font-weight: 700;
+}
+
+.archiveLabel {
+  font-weight: 700;
+}
+
+.archiveSwitch {
+  width: 58px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  transition: background 200ms ease, border-color 200ms ease;
+}
+
+.archiveSwitchThumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transform: translateX(0);
+  transition: transform 200ms ease;
+}
+
+.archiveToggleActive .archiveSwitch {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(0, 0, 0, 0.35);
+}
+
+.archiveToggleActive .archiveSwitchThumb {
+  transform: translateX(26px);
+}
+
+.dateActions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.filterWrap {
+  position: relative;
+}
+
+.filterButton {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  opacity: 0.85;
+  transition: background 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+
+.filterButton:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.filterButtonActive {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.24);
+  opacity: 1;
+}
+
+.filterIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.filterLabel {
+  font-weight: 600;
+}
+
+.filterMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 180px;
+  background: rgba(20, 20, 20, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  z-index: 20;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+}
+
+.filterOption {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.filterOption:hover {
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 1;
 }
 
 /* Continued tag for carried-over tasks */

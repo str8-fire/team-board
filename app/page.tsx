@@ -24,7 +24,7 @@ const COLUMNS: { key: Status; title: string }[] = [
   { key: "doing", title: "Doing" },
   { key: "blocked", title: "Blocked" },
   { key: "help", title: "Need Help" },
-  { key: "done", title: "Done (Today)" },
+  { key: "done", title: "Completed" },
 ];
 
 const STORAGE_KEY = "workboard-daily-tasks";
@@ -223,6 +223,25 @@ const todayLabel = () =>
     day: "numeric",
   });
 
+const formatRelativeTime = (dateString: string) => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "";
+
+  const nowDate = new Date();
+  const diffMs = nowDate.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "Yesterday";
+  return `${diffDays} days ago`;
+};
+
 function Column({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className={styles.column}>
@@ -236,11 +255,13 @@ function TaskCard({
   task,
   onMove,
   onDelete,
+  onEdit,
   readOnly,
 }: {
   task: Task;
   onMove: (id: string, status: Status) => void;
   onDelete: (id: string) => void;
+  onEdit: (id: string, updates: { title: string; person: string; notes?: string }) => void;
   readOnly?: boolean;
 }) {
   return (
@@ -252,7 +273,10 @@ function TaskCard({
 
       <div className={styles.taskMeta}>
         <span style={{ fontWeight: 700 }}>{task.person}</span>
-        <span style={{ opacity: 0.7 }}> • {task.updatedAt}</span>
+        <span style={{ opacity: 0.7 }} title={task.updatedAt}>
+          {" "}
+          • {formatRelativeTime(task.updatedAt)}
+        </span>
       </div>
 
       {task.notes ? <div className={styles.taskNotes}>{task.notes}</div> : null}
@@ -270,6 +294,34 @@ function TaskCard({
               {s === "doing" ? "Doing" : s === "blocked" ? "Blocked" : s === "help" ? "Need Help" : "Done"}
             </button>
           ))}
+
+          <button
+            onClick={() => {
+              const nextTitle = window.prompt("Edit task title:", task.title);
+              if (nextTitle === null) return;
+              const cleanTitle = nextTitle.trim();
+              if (!cleanTitle) return;
+
+              const nextPerson = window.prompt("Edit assigned to:", task.person);
+              if (nextPerson === null) return;
+              const cleanPerson = nextPerson.trim();
+              if (!cleanPerson) return;
+
+              const nextNotes = window.prompt("Edit notes (optional):", task.notes || "");
+              if (nextNotes === null) return;
+              const cleanNotes = nextNotes.trim();
+
+              onEdit(task.id, {
+                title: cleanTitle,
+                person: cleanPerson,
+                notes: cleanNotes ? cleanNotes : undefined,
+              });
+            }}
+            className={`${styles.taskButton}`}
+            title="Edit task"
+          >
+            Edit
+          </button>
 
           <button
             onClick={() => onDelete(task.id)}
@@ -303,19 +355,20 @@ function HistoricalDaySection({
       <div className={styles.historicalBoard}>
         {COLUMNS.map((col) => (
           <Column key={col.key} title={col.title}>
-            {grouped[col.key].length === 0 ? (
-              <div className={styles.columnEmpty}>No items</div>
-            ) : (
-              grouped[col.key].map((t) => (
-                <TaskCard
-                  key={t.id}
-                  task={t}
-                  onMove={() => {}}
-                  onDelete={() => {}}
-                  readOnly={true}
-                />
-              ))
-            )}
+      {grouped[col.key].length === 0 ? (
+        <div className={styles.columnEmpty}>No items</div>
+      ) : (
+        grouped[col.key].map((t) => (
+          <TaskCard
+            key={t.id}
+            task={t}
+            onMove={() => {}}
+            onDelete={() => {}}
+            onEdit={() => {}}
+            readOnly={true}
+          />
+        ))
+      )}
           </Column>
         ))}
       </div>
@@ -342,7 +395,9 @@ function getInitialState(): { todayKey: string; dateLabel: string; dailyBoards: 
     }
   }
   
-  if (Object.keys(boards).length === 0) {
+  const totalTasks = Object.values(boards).reduce((sum, tasks) => sum + tasks.length, 0);
+
+  if (Object.keys(boards).length === 0 || totalTasks === 0) {
     boards = generateSampleData();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(boards));
     return { todayKey: currentDateKey, dateLabel: label, dailyBoards: boards };
@@ -478,6 +533,18 @@ export default function Home() {
     }));
   }
 
+  function editTask(id: string, updates: { title: string; person: string; notes?: string }) {
+    setState((prev) => ({
+      ...prev,
+      dailyBoards: {
+        ...prev.dailyBoards,
+        [todayKey]: (prev.dailyBoards[todayKey] || []).map((t) =>
+          t.id === id ? { ...t, ...updates, updatedAt: now() } : t
+        ),
+      },
+    }));
+  }
+
   return (
     <main className={styles.page}>
       {/* Top header area */}
@@ -514,7 +581,7 @@ export default function Home() {
               <div className={styles.columnEmpty}>No items</div>
             ) : (
               grouped[col.key].map((t) => (
-                <TaskCard key={t.id} task={t} onMove={moveTask} onDelete={deleteTask} />
+                <TaskCard key={t.id} task={t} onMove={moveTask} onDelete={deleteTask} onEdit={editTask} />
               ))
             )}
           </Column>
