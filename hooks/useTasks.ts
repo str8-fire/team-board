@@ -33,7 +33,7 @@ function generateSampleData(): DailyBoard {
   return {
     [threeDaysAgoKey]: [
       {
-        id: "sample-1",
+        id: crypto.randomUUID(),
         title: "Design new logo concepts",
         person: "Wizard",
         notes: "Need 3 variations",
@@ -44,7 +44,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(threeDaysAgo),
       },
       {
-        id: "sample-2",
+        id: crypto.randomUUID(),
         title: "Review vendor contracts",
         person: "T",
         notes: null,
@@ -57,7 +57,7 @@ function generateSampleData(): DailyBoard {
     ],
     [twoDaysAgoKey]: [
       {
-        id: "sample-2-carried-" + twoDaysAgoKey,
+        id: crypto.randomUUID(),
         title: "Review vendor contracts",
         person: "T",
         notes: null,
@@ -68,7 +68,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(twoDaysAgo),
       },
       {
-        id: "sample-3",
+        id: crypto.randomUUID(),
         title: "Update product descriptions",
         person: "CS",
         notes: "Focus on SEO keywords",
@@ -79,7 +79,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(twoDaysAgo),
       },
       {
-        id: "sample-4",
+        id: crypto.randomUUID(),
         title: "Send weekly newsletter",
         person: "Marketing",
         notes: null,
@@ -92,7 +92,7 @@ function generateSampleData(): DailyBoard {
     ],
     [yesterdayKey]: [
       {
-        id: "sample-2-carried-" + yesterdayKey,
+        id: crypto.randomUUID(),
         title: "Review vendor contracts",
         person: "T",
         notes: null,
@@ -103,7 +103,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(yesterday),
       },
       {
-        id: "sample-3-carried-" + yesterdayKey,
+        id: crypto.randomUUID(),
         title: "Update product descriptions",
         person: "CS",
         notes: "Focus on SEO keywords",
@@ -114,7 +114,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(yesterday),
       },
       {
-        id: "sample-5",
+        id: crypto.randomUUID(),
         title: "Prepare Q1 report",
         person: "Finance",
         notes: null,
@@ -125,7 +125,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(yesterday),
       },
       {
-        id: "sample-6",
+        id: crypto.randomUUID(),
         title: "Fix checkout bug",
         person: "Dev",
         notes: "Payment gateway timeout issue",
@@ -138,7 +138,7 @@ function generateSampleData(): DailyBoard {
     ],
     [todayKey]: [
       {
-        id: "sample-2-carried-" + todayKey,
+        id: crypto.randomUUID(),
         title: "Review vendor contracts",
         person: "T",
         notes: null,
@@ -149,7 +149,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(today),
       },
       {
-        id: "sample-3-carried-" + todayKey,
+        id: crypto.randomUUID(),
         title: "Update product descriptions",
         person: "CS",
         notes: "Focus on SEO keywords",
@@ -160,7 +160,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(today),
       },
       {
-        id: "sample-6-carried-" + todayKey,
+        id: crypto.randomUUID(),
         title: "Fix checkout bug",
         person: "Dev",
         notes: "Payment gateway timeout issue",
@@ -171,7 +171,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(today),
       },
       {
-        id: "sample-7",
+        id: crypto.randomUUID(),
         title: "DNGR website edits",
         person: "Wizard",
         notes: null,
@@ -182,7 +182,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(today),
       },
       {
-        id: "sample-8",
+        id: crypto.randomUUID(),
         title: "Approve packaging colors",
         person: "T",
         notes: null,
@@ -193,7 +193,7 @@ function generateSampleData(): DailyBoard {
         created_at: formatDate(today),
       },
       {
-        id: "sample-9",
+        id: crypto.randomUUID(),
         title: "Reply to customer emails",
         person: "CS",
         notes: "Refund + address changes",
