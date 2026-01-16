@@ -62,6 +62,7 @@ type UITask = {
   notes?: string;
   status: Status;
   priority: Priority;
+  sortOrder: number;
   updatedAt: string;
   date: string;
   continued?: boolean;
@@ -75,17 +76,30 @@ function toUITask(task: Task): UITask {
     notes: task.notes || undefined,
     status: task.status,
     priority: task.priority,
+    sortOrder: task.sort_order,
     updatedAt: task.updated_at,
     date: task.date,
     continued: task.continued,
   };
 }
 
-function Column({ title, children }: { title: string; children: React.ReactNode }) {
+function Column({
+  title,
+  children,
+  onDragOver,
+  onDrop,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onDragOver?: (event: React.DragEvent) => void;
+  onDrop?: (event: React.DragEvent) => void;
+}) {
   return (
     <section className={styles.column}>
       <div className={styles.columnTitle}>{title}</div>
-      <div className={styles.columnItems}>{children}</div>
+      <div className={styles.columnItems} onDragOver={onDragOver} onDrop={onDrop}>
+        {children}
+      </div>
     </section>
   );
 }
@@ -96,6 +110,9 @@ function TaskCard({
   onDelete,
   onEdit,
   onPriorityChange,
+  onDragStart,
+  onDragEnd,
+  isDragging,
   readOnly,
 }: {
   task: UITask;
@@ -103,6 +120,9 @@ function TaskCard({
   onDelete: (id: string) => void;
   onEdit: (id: string, updates: { title: string; person: string; notes?: string }) => void;
   onPriorityChange: (id: string, priority: Priority) => void;
+  onDragStart: (id: string) => void;
+  onDragEnd: () => void;
+  isDragging: boolean;
   readOnly?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -175,7 +195,23 @@ function TaskCard({
           : "None";
 
   return (
-    <div className={`${styles.task} ${readOnly ? styles.taskReadOnly : ""} ${priorityClass}`}>
+    <div
+      className={`${styles.task} ${readOnly ? styles.taskReadOnly : ""} ${priorityClass} ${
+        isDragging ? styles.taskDragging : ""
+      }`}
+      data-task-id={task.id}
+      draggable={!readOnly}
+      onDragStart={(event) => {
+        if (readOnly) return;
+        event.dataTransfer.setData("text/plain", task.id);
+        event.dataTransfer.effectAllowed = "move";
+        onDragStart(task.id);
+      }}
+      onDragEnd={() => {
+        if (readOnly) return;
+        onDragEnd();
+      }}
+    >
       {!readOnly && (
         <div className={styles.priorityWrap}>
           <button
@@ -407,6 +443,9 @@ function HistoricalDaySection({
   const grouped = useMemo(() => {
     const map: Record<Status, UITask[]> = { doing: [], blocked: [], help: [], done: [] };
     for (const t of tasks) map[t.status].push(t);
+    (Object.keys(map) as Status[]).forEach((status) => {
+      map[status].sort((a, b) => b.sortOrder - a.sortOrder);
+    });
     return map;
   }, [tasks]);
 
@@ -427,6 +466,9 @@ function HistoricalDaySection({
                   onDelete={() => {}}
                   onEdit={() => {}}
                   onPriorityChange={() => {}}
+                  onDragStart={() => {}}
+                  onDragEnd={() => {}}
+                  isDragging={false}
                   readOnly
                 />
               ))
@@ -439,12 +481,24 @@ function HistoricalDaySection({
 }
 
 export default function Home() {
-  const { dailyBoards, todayKey, isLoading, isOnline, addTask, moveTask, editTask, updatePriority, deleteTask } = useTasks();
+  const {
+    dailyBoards,
+    todayKey,
+    isLoading,
+    isOnline,
+    addTask,
+    moveTask,
+    editTask,
+    updatePriority,
+    updateTaskPosition,
+    deleteTask,
+  } = useTasks();
   const { lastActivity, addActivity } = useActivity();
 
   const [showHistorical, setShowHistorical] = useState(false);
   const [filterPerson, setFilterPerson] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
 
   const [title, setTitle] = useState("");
   const [person, setPerson] = useState("");
@@ -473,10 +527,22 @@ export default function Home() {
     return tasks.filter((task) => task.person === filterPerson);
   }, [filterPerson]);
 
+  const groupedAll = useMemo(() => {
+    const map: Record<Status, UITask[]> = { doing: [], blocked: [], help: [], done: [] };
+    for (const t of todayTasks) map[t.status].push(t);
+    (Object.keys(map) as Status[]).forEach((status) => {
+      map[status].sort((a, b) => b.sortOrder - a.sortOrder);
+    });
+    return map;
+  }, [todayTasks]);
+
   const grouped = useMemo(() => {
     const map: Record<Status, UITask[]> = { doing: [], blocked: [], help: [], done: [] };
     const filtered = filterPerson === "all" ? todayTasks : todayTasks.filter((task) => task.person === filterPerson);
     for (const t of filtered) map[t.status].push(t);
+    (Object.keys(map) as Status[]).forEach((status) => {
+      map[status].sort((a, b) => b.sortOrder - a.sortOrder);
+    });
     return map;
   }, [todayTasks, filterPerson]);
 
@@ -549,6 +615,81 @@ export default function Home() {
       const label =
         priority === "high" ? "high" : priority === "medium" ? "medium" : priority === "low" ? "low" : "no";
       addActivity(`${task.person} set "${task.title}" to ${label} priority`);
+    }
+  }
+
+  const getDropSortOrder = (tasks: UITask[], insertIndex: number) => {
+    const bump = 1000;
+    if (tasks.length === 0) return Date.now();
+
+    const prev = tasks[insertIndex - 1];
+    const next = tasks[insertIndex];
+
+    if (!prev && next) return next.sortOrder + bump;
+    if (prev && !next) return prev.sortOrder - bump;
+    if (prev && next) return (prev.sortOrder + next.sortOrder) / 2;
+    return Date.now();
+  };
+
+  const getDraggedTaskId = (event?: React.DragEvent) => {
+    return draggingTaskId || event?.dataTransfer.getData("text/plain") || null;
+  };
+
+  const getInsertIndexFromEvent = (
+    event: React.DragEvent,
+    draggedId: string | null,
+    clientYOverride?: number
+  ) => {
+    const column = event.currentTarget as HTMLElement;
+    const taskEls = Array.from(column.querySelectorAll<HTMLElement>("[data-task-id]"));
+    let insertIndex = 0;
+
+    for (const el of taskEls) {
+      if (el.dataset.taskId === draggedId) continue;
+      const rect = el.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+      const pointerY = clientYOverride ?? event.clientY;
+      if (pointerY < midpoint) {
+        return insertIndex;
+      }
+      insertIndex += 1;
+    }
+
+    return insertIndex;
+  };
+
+  const getColumnDropY = (event: React.DragEvent, status: Status) => {
+    const listForOrdering = filterPerson === "all" ? groupedAll[status] : grouped[status];
+    if (listForOrdering.length > 0) return event.clientY;
+    const container = event.currentTarget as HTMLElement;
+    const rect = container.getBoundingClientRect();
+    return rect.top + rect.height / 2;
+  };
+
+  async function handleDropOnColumn(status: Status, event: React.DragEvent) {
+    event.preventDefault();
+    const draggedId = getDraggedTaskId(event);
+    if (!draggedId) return;
+
+    const listForOrdering = filterPerson === "all" ? groupedAll[status] : grouped[status];
+    const targetList = listForOrdering.filter((t) => t.id !== draggedId);
+    const dropY = getColumnDropY(event, status);
+    const insertIndex = getInsertIndexFromEvent(event, draggedId, dropY);
+    const sortOrder = getDropSortOrder(targetList, insertIndex);
+    const draggedTask = todayTasks.find((t) => t.id === draggedId);
+    const updatedTask = await updateTaskPosition(draggedId, { status, sort_order: sortOrder });
+    setDraggingTaskId(null);
+
+    if (draggedTask && updatedTask && draggedTask.status !== status) {
+      const statusLabel =
+        status === "doing"
+          ? "Doing"
+          : status === "blocked"
+            ? "Blocked"
+            : status === "help"
+              ? "Need Help"
+              : "Completed";
+      addActivity(`${draggedTask.person} moved "${draggedTask.title}" to ${statusLabel}`);
     }
   }
 
@@ -668,7 +809,15 @@ export default function Home() {
 
       <div className={styles.board}>
         {COLUMNS.map((col) => (
-          <Column key={col.key} title={col.title}>
+          <Column
+            key={col.key}
+            title={col.title}
+            onDragOver={(event) => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+            }}
+            onDrop={(event) => handleDropOnColumn(col.key, event)}
+          >
             {grouped[col.key].length === 0 ? (
               <div className={styles.columnEmpty}>No items</div>
             ) : (
@@ -680,6 +829,9 @@ export default function Home() {
                   onDelete={handleDeleteTask}
                   onEdit={handleEditTask}
                   onPriorityChange={handlePriorityChange}
+                  onDragStart={(id) => setDraggingTaskId(id)}
+                  onDragEnd={() => setDraggingTaskId(null)}
+                  isDragging={draggingTaskId === t.id}
                 />
               ))
             )}

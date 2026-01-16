@@ -94,14 +94,23 @@ async function loadFromLocalStorage(): Promise<DailyBoard> {
     try {
       const parsed = JSON.parse(stored);
       for (const dateKey of Object.keys(parsed)) {
-        boards[dateKey] = parsed[dateKey].map((t: Record<string, unknown>) => ({
-          ...t,
-          updated_at: t.updatedAt || t.updated_at,
-          created_at: t.created_at || t.updatedAt || now(),
-          notes: t.notes || null,
-          continued: t.continued || false,
-          priority: (t.priority as Priority) || "none",
-        }));
+        boards[dateKey] = parsed[dateKey].map((t: Record<string, unknown>) => {
+          const rawSortOrder = Number(t.sort_order ?? t.sortOrder);
+          const dateFallback = Date.parse(
+            String(t.updated_at || t.updatedAt || t.created_at || t.createdAt || "")
+          );
+          const fallbackOrder = Number.isFinite(dateFallback) ? dateFallback : Date.now();
+
+          return {
+            ...t,
+            updated_at: t.updatedAt || t.updated_at,
+            created_at: t.created_at || t.updatedAt || now(),
+            notes: t.notes || null,
+            continued: t.continued || false,
+            priority: (t.priority as Priority) || "none",
+            sort_order: Number.isFinite(rawSortOrder) ? rawSortOrder : fallbackOrder,
+          };
+        });
       }
     } catch {
       boards = {};
@@ -143,7 +152,7 @@ export function useTasks() {
         const { data, error } = await supabase
           .from("tasks")
           .select("*")
-          .order("created_at", { ascending: false });
+          .order("sort_order", { ascending: false });
 
         if (error) throw error;
 
@@ -253,6 +262,7 @@ export function useTasks() {
         notes: notes || null,
         status: "doing",
         priority: "none",
+        sort_order: Date.now(),
         updated_at: now(),
         date: todayKey,
         continued: false,
@@ -378,6 +388,56 @@ export function useTasks() {
     [todayKey, dailyBoards]
   );
 
+  const updateTaskPosition = useCallback(
+    async (
+      id: string,
+      updates: { status?: Status; sort_order: number }
+    ): Promise<Task | null> => {
+      const task = (dailyBoards[todayKey] || []).find((t) => t.id === id);
+      if (!task) return null;
+
+      const updatedTask = {
+        ...task,
+        ...updates,
+        updated_at: now(),
+      };
+
+      setDailyBoards((prev) => ({
+        ...prev,
+        [todayKey]: (prev[todayKey] || []).map((t) =>
+          t.id === id ? updatedTask : t
+        ),
+      }));
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          const { error } = await supabase
+            .from("tasks")
+            .update({
+              status: updates.status ?? task.status,
+              sort_order: updates.sort_order,
+              updated_at: now(),
+            })
+            .eq("id", id);
+          if (error) throw error;
+        } catch (error) {
+          console.error("Failed to update task order in Supabase:", error);
+        }
+      } else {
+        const newBoards = {
+          ...dailyBoards,
+          [todayKey]: (dailyBoards[todayKey] || []).map((t) =>
+            t.id === id ? updatedTask : t
+          ),
+        };
+        saveToLocalStorage(newBoards);
+      }
+
+      return updatedTask;
+    },
+    [todayKey, dailyBoards]
+  );
+
   const updatePriority = useCallback(
     async (id: string, priority: Priority): Promise<Task | null> => {
       const task = (dailyBoards[todayKey] || []).find((t) => t.id === id);
@@ -456,6 +516,7 @@ export function useTasks() {
     moveTask,
     editTask,
     updatePriority,
+    updateTaskPosition,
     deleteTask,
   };
 }

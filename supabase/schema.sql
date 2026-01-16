@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   notes TEXT,
   status TEXT NOT NULL CHECK (status IN ('doing', 'blocked', 'help', 'done')),
   priority TEXT NOT NULL DEFAULT 'none' CHECK (priority IN ('none', 'low', 'medium', 'high')),
+  sort_order BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW()) * 1000),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   date TEXT NOT NULL,
   continued BOOLEAN NOT NULL DEFAULT FALSE,

@@ -8,6 +8,7 @@ export type Task = {
   notes: string | null;
   status: Status;
   priority: Priority;
+  sort_order: number;
   updated_at: string;
   date: string;
   continued: boolean;
@@ -31,6 +32,7 @@ export interface Database {
           notes: string | null;
           status: Status;
           priority: Priority;
+          sort_order: number;
           updated_at: string;
           date: string;
           continued: boolean;
@@ -43,6 +45,7 @@ export interface Database {
           notes?: string | null;
           status: Status;
           priority: Priority;
+          sort_order: number;
           updated_at: string;
           date: string;
           continued: boolean;
@@ -55,6 +58,7 @@ export interface Database {
           notes?: string | null;
           status?: Status;
           priority?: Priority;
+          sort_order?: number;
           updated_at?: string;
           date?: string;
           continued?: boolean;
