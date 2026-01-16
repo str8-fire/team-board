@@ -12,199 +12,29 @@ const getDateKey = (date: Date = new Date()) => {
   return date.toISOString().split("T")[0];
 };
 
-function generateSampleData(): DailyBoard {
-  const today = new Date();
-  const todayKey = getDateKey(today);
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayKey = getDateKey(yesterday);
+const isUuid = (value: string) => UUID_REGEX.test(value);
 
-  const twoDaysAgo = new Date(today);
-  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-  const twoDaysAgoKey = getDateKey(twoDaysAgo);
+function hashStringToHex(input: string) {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
 
-  const threeDaysAgo = new Date(today);
-  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-  const threeDaysAgoKey = getDateKey(threeDaysAgo);
+function makeCarriedTaskId(baseId: string, dateKey: string) {
+  if (!isUuid(baseId)) {
+    return crypto.randomUUID();
+  }
 
-  const formatDate = (date: Date) => date.toISOString();
+  const hex = baseId.replace(/-/g, "");
+  const dateHash = hashStringToHex(dateKey);
+  const carriedHex = `${hex.slice(0, 24)}${dateHash}`;
 
-  return {
-    [threeDaysAgoKey]: [
-      {
-        id: crypto.randomUUID(),
-        title: "Design new logo concepts",
-        person: "Wizard",
-        notes: "Need 3 variations",
-        status: "done",
-        updated_at: formatDate(threeDaysAgo),
-        date: threeDaysAgoKey,
-        continued: false,
-        created_at: formatDate(threeDaysAgo),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Review vendor contracts",
-        person: "T",
-        notes: null,
-        status: "blocked",
-        updated_at: formatDate(threeDaysAgo),
-        date: threeDaysAgoKey,
-        continued: false,
-        created_at: formatDate(threeDaysAgo),
-      },
-    ],
-    [twoDaysAgoKey]: [
-      {
-        id: crypto.randomUUID(),
-        title: "Review vendor contracts",
-        person: "T",
-        notes: null,
-        status: "blocked",
-        updated_at: formatDate(twoDaysAgo),
-        date: twoDaysAgoKey,
-        continued: true,
-        created_at: formatDate(twoDaysAgo),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Update product descriptions",
-        person: "CS",
-        notes: "Focus on SEO keywords",
-        status: "doing",
-        updated_at: formatDate(twoDaysAgo),
-        date: twoDaysAgoKey,
-        continued: false,
-        created_at: formatDate(twoDaysAgo),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Send weekly newsletter",
-        person: "Marketing",
-        notes: null,
-        status: "done",
-        updated_at: formatDate(twoDaysAgo),
-        date: twoDaysAgoKey,
-        continued: false,
-        created_at: formatDate(twoDaysAgo),
-      },
-    ],
-    [yesterdayKey]: [
-      {
-        id: crypto.randomUUID(),
-        title: "Review vendor contracts",
-        person: "T",
-        notes: null,
-        status: "help",
-        updated_at: formatDate(yesterday),
-        date: yesterdayKey,
-        continued: true,
-        created_at: formatDate(yesterday),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Update product descriptions",
-        person: "CS",
-        notes: "Focus on SEO keywords",
-        status: "doing",
-        updated_at: formatDate(yesterday),
-        date: yesterdayKey,
-        continued: true,
-        created_at: formatDate(yesterday),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Prepare Q1 report",
-        person: "Finance",
-        notes: null,
-        status: "done",
-        updated_at: formatDate(yesterday),
-        date: yesterdayKey,
-        continued: false,
-        created_at: formatDate(yesterday),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Fix checkout bug",
-        person: "Dev",
-        notes: "Payment gateway timeout issue",
-        status: "blocked",
-        updated_at: formatDate(yesterday),
-        date: yesterdayKey,
-        continued: false,
-        created_at: formatDate(yesterday),
-      },
-    ],
-    [todayKey]: [
-      {
-        id: crypto.randomUUID(),
-        title: "Review vendor contracts",
-        person: "T",
-        notes: null,
-        status: "help",
-        updated_at: formatDate(today),
-        date: todayKey,
-        continued: true,
-        created_at: formatDate(today),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Update product descriptions",
-        person: "CS",
-        notes: "Focus on SEO keywords",
-        status: "doing",
-        updated_at: formatDate(today),
-        date: todayKey,
-        continued: true,
-        created_at: formatDate(today),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Fix checkout bug",
-        person: "Dev",
-        notes: "Payment gateway timeout issue",
-        status: "doing",
-        updated_at: formatDate(today),
-        date: todayKey,
-        continued: true,
-        created_at: formatDate(today),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "DNGR website edits",
-        person: "Wizard",
-        notes: null,
-        status: "doing",
-        updated_at: formatDate(today),
-        date: todayKey,
-        continued: false,
-        created_at: formatDate(today),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Approve packaging colors",
-        person: "T",
-        notes: null,
-        status: "blocked",
-        updated_at: formatDate(today),
-        date: todayKey,
-        continued: false,
-        created_at: formatDate(today),
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Reply to customer emails",
-        person: "CS",
-        notes: "Refund + address changes",
-        status: "help",
-        updated_at: formatDate(today),
-        date: todayKey,
-        continued: false,
-        created_at: formatDate(today),
-      },
-    ],
-  };
+  return `${carriedHex.slice(0, 8)}-${carriedHex.slice(8, 12)}-${carriedHex.slice(12, 16)}-${carriedHex.slice(16, 20)}-${carriedHex.slice(20)}`;
 }
 
 function groupTasksByDate(tasks: Task[]): DailyBoard {
@@ -229,7 +59,7 @@ function carryOverTasks(boards: DailyBoard, currentDateKey: string): DailyBoard 
     const dayTasks = boards[dateKey];
     for (const task of dayTasks) {
       if (task.status !== "done") {
-        const carriedTaskId = `${task.id}-carried-${currentDateKey}`;
+        const carriedTaskId = makeCarriedTaskId(task.id, currentDateKey);
         if (!existingTodayTaskIds.has(carriedTaskId)) {
           const carriedTask: Task = {
             ...task,
@@ -279,7 +109,7 @@ async function loadFromLocalStorage(): Promise<DailyBoard> {
 
   const totalTasks = Object.values(boards).reduce((sum, tasks) => sum + tasks.length, 0);
   if (Object.keys(boards).length === 0 || totalTasks === 0) {
-    boards = generateSampleData();
+    boards = {};
   }
 
   return boards;
@@ -322,16 +152,7 @@ export function useTasks() {
           setDailyBoards(boards);
           setIsOnline(true);
         } else {
-          const sampleData = generateSampleData();
-          const allTasks = Object.values(sampleData).flat();
-          
-          const { error: insertError } = await supabase
-            .from("tasks")
-            .insert(allTasks as Task[]);
-          
-          if (insertError) throw insertError;
-          
-          setDailyBoards(sampleData);
+          setDailyBoards({ [todayKey]: [] });
           setIsOnline(true);
         }
       } catch (error) {
