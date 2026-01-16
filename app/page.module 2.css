@@ -1,0 +1,277 @@
+.page {
+  padding: 44px 56px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* Top area: title on left, subtitle to the right */
+.top {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 36px;
+  align-items: start;
+}
+
+.title {
+  font-size: 64px;
+  line-height: 0.95;
+  margin: 0;
+  font-weight: 800;
+}
+
+.badge {
+  margin-top: 10px;
+  opacity: 0.6;
+  font-size: 18px;
+}
+
+.subtitle {
+  margin-top: 10px;
+  max-width: 520px;
+  opacity: 0.8;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Middle: date row */
+.dateRow {
+  margin-top: 54px;
+  font-size: 36px;
+  opacity: 0.92;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.archiveToggle {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+.dateLabel {
+  font-weight: 700;
+}
+
+/* Board: centered row of 4 columns with nice spacing */
+.board {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .board {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 28px 18px;
+  }
+  .top {
+    grid-template-columns: 1fr;
+  }
+  .title {
+    font-size: 48px;
+  }
+  .dateRow {
+    font-size: 28px;
+  }
+  .board {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Column */
+.column {
+  padding: 10px 0;
+}
+
+.columnTitle {
+  font-weight: 700;
+  opacity: 0.9;
+  margin-bottom: 10px;
+}
+
+.columnItems {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.columnEmpty {
+  opacity: 0.55;
+  font-size: 14px;
+}
+
+/* Task card */
+.task {
+  border-radius: 12px;
+  padding: 12px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.taskTitle {
+  font-weight: 650;
+}
+
+.taskMeta {
+  margin-top: 6px;
+  opacity: 0.85;
+  font-size: 14px;
+}
+
+.taskNotes {
+  margin-top: 8px;
+  opacity: 0.75;
+  font-size: 14px;
+}
+
+.taskActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.taskButton {
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.taskButtonActive {
+  background: rgba(255, 255, 255, 0.1);
+  cursor: default;
+  opacity: 1;
+}
+
+.deleteButton {
+  margin-left: auto;
+  opacity: 0.85;
+}
+
+/* Add task section: placed lower like the mock */
+.addSection {
+  margin-top: 90px;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.addTitle {
+  font-size: 44px;
+  margin: 0;
+  font-weight: 800;
+}
+
+.addForm {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  max-width: 420px;
+}
+
+.input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  width: 100%;
+}
+
+.addRow {
+  display: flex;
+  gap: 10px;
+}
+
+.button {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Historical tasks toggle active state */
+.archiveToggleActive {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 700;
+}
+
+/* Continued tag for carried-over tasks */
+.continuedTag {
+  color: #f59e0b;
+  font-weight: 600;
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+/* Read-only task styling */
+.taskReadOnly {
+  opacity: 0.7;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Historical section */
+.historicalSection {
+  margin-top: 60px;
+  padding-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.historicalTitle {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+
+/* Historical day section */
+.historicalDay {
+  margin-bottom: 40px;
+}
+
+.historicalDateLabel {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  opacity: 0.75;
+}
+
+.historicalBoard {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .historicalBoard {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .historicalBoard {
+    grid-template-columns: 1fr;
+  }
+}
