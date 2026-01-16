@@ -156,10 +156,26 @@
 
 /* Task card */
 .task {
+  position: relative;
   border-radius: 12px;
   padding: 12px 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
+}
+
+.taskPriorityHigh {
+  border-color: rgba(239, 68, 68, 0.78);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.18);
+}
+
+.taskPriorityMedium {
+  border-color: rgba(251, 146, 60, 0.7);
+  box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.12);
+}
+
+.taskPriorityLow {
+  border-color: rgba(96, 165, 250, 0.7);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.12);
 }
 
 .taskTitle {
@@ -213,6 +229,95 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
+}
+
+.priorityFlag svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.priorityWrap {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.priorityChip {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(10, 10, 10, 0.6);
+  cursor: pointer;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.8;
+  transition: opacity 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.priorityChip:hover {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(20, 20, 20, 0.8);
+}
+
+.priorityMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 140px;
+  background: rgba(18, 18, 18, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  z-index: 20;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+}
+
+.priorityOption {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  opacity: 0.8;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.priorityOption:hover {
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 1;
+}
+
+.priorityOption:disabled {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: default;
+}
+
+.priorityHigh {
+  color: #ef4444;
+}
+
+.priorityMedium {
+  color: #fb923c;
+}
+
+.priorityLow {
+  color: #60a5fa;
+}
+
+.priorityNone {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .editForm {

@@ -4,13 +4,20 @@ import React, { useMemo, useState, useRef, useCallback } from "react";
 import styles from "./page.module.css";
 import { useTasks } from "@/hooks/useTasks";
 import { useActivity } from "@/hooks/useActivity";
-import type { Task, Status } from "@/lib/database.types";
+import type { Task, Status, Priority } from "@/lib/database.types";
 
 const COLUMNS: { key: Status; title: string }[] = [
   { key: "doing", title: "Doing" },
   { key: "blocked", title: "Blocked" },
   { key: "help", title: "Need Help" },
   { key: "done", title: "Completed" },
+];
+
+const PRIORITY_OPTIONS: { key: Priority; label: string }[] = [
+  { key: "high", label: "High" },
+  { key: "medium", label: "Medium" },
+  { key: "low", label: "Low" },
+  { key: "none", label: "None" },
 ];
 
 const formatDateLabel = (dateKey: string) => {
@@ -54,6 +61,7 @@ type UITask = {
   person: string;
   notes?: string;
   status: Status;
+  priority: Priority;
   updatedAt: string;
   date: string;
   continued?: boolean;
@@ -66,6 +74,7 @@ function toUITask(task: Task): UITask {
     person: task.person,
     notes: task.notes || undefined,
     status: task.status,
+    priority: task.priority,
     updatedAt: task.updated_at,
     date: task.date,
     continued: task.continued,
@@ -86,18 +95,21 @@ function TaskCard({
   onMove,
   onDelete,
   onEdit,
+  onPriorityChange,
   readOnly,
 }: {
   task: UITask;
   onMove: (id: string, status: Status) => void;
   onDelete: (id: string) => void;
   onEdit: (id: string, updates: { title: string; person: string; notes?: string }) => void;
+  onPriorityChange: (id: string, priority: Priority) => void;
   readOnly?: boolean;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [notesTruncated, setNotesTruncated] = useState(false);
+  const [priorityOpen, setPriorityOpen] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editPerson, setEditPerson] = useState(task.person);
   const [editNotes, setEditNotes] = useState(task.notes || "");
@@ -114,6 +126,12 @@ function TaskCard({
   React.useEffect(() => {
     if (!isEditing) {
       setConfirmingDelete(false);
+    }
+  }, [isEditing]);
+
+  React.useEffect(() => {
+    if (isEditing) {
+      setPriorityOpen(false);
     }
   }, [isEditing]);
 
@@ -138,8 +156,80 @@ function TaskCard({
 
   const canSave = editTitle.trim().length > 0 && editPerson.trim().length > 0;
 
+  const priorityClass =
+    task.priority === "high"
+      ? styles.taskPriorityHigh
+      : task.priority === "medium"
+        ? styles.taskPriorityMedium
+        : task.priority === "low"
+          ? styles.taskPriorityLow
+          : "";
+
+  const priorityLabel =
+    task.priority === "high"
+      ? "High"
+      : task.priority === "medium"
+        ? "Medium"
+        : task.priority === "low"
+          ? "Low"
+          : "None";
+
   return (
-    <div className={`${styles.task} ${readOnly ? styles.taskReadOnly : ""}`}>
+    <div className={`${styles.task} ${readOnly ? styles.taskReadOnly : ""} ${priorityClass}`}>
+      {!readOnly && (
+        <div className={styles.priorityWrap}>
+          <button
+            type="button"
+            className={`${styles.priorityChip} ${styles[`priority${priorityLabel}`]}`}
+            onClick={() => setPriorityOpen((prev) => !prev)}
+            aria-haspopup="listbox"
+            aria-expanded={priorityOpen}
+            title={`${priorityLabel} priority`}
+          >
+            <span className={styles.priorityFlag} aria-hidden="true">
+              <svg viewBox="0 0 20 20" focusable="false">
+                <path
+                  d="M5 3v14M6 4h8l-2.2 3L14 10H6z"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            {priorityLabel}
+          </button>
+          {priorityOpen && (
+            <div className={styles.priorityMenu} role="listbox">
+              {PRIORITY_OPTIONS.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  className={`${styles.priorityOption} ${styles[`priority${option.label}`]}`}
+                  onClick={() => {
+                    onPriorityChange(task.id, option.key);
+                    setPriorityOpen(false);
+                  }}
+                  disabled={task.priority === option.key}
+                >
+                  <span className={styles.priorityFlag} aria-hidden="true">
+                    <svg viewBox="0 0 20 20" focusable="false">
+                      <path
+                        d="M5 3v14M6 4h8l-2.2 3L14 10H6z"
+                        fill="currentColor"
+                        stroke="currentColor"
+                        strokeWidth="1.2"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {isEditing ? (
         <div className={styles.editForm} aria-label="Edit task">
           <input
@@ -330,7 +420,15 @@ function HistoricalDaySection({
               <div className={styles.columnEmpty}>No items</div>
             ) : (
               grouped[col.key].map((t) => (
-                <TaskCard key={t.id} task={t} onMove={() => {}} onDelete={() => {}} onEdit={() => {}} readOnly />
+                <TaskCard
+                  key={t.id}
+                  task={t}
+                  onMove={() => {}}
+                  onDelete={() => {}}
+                  onEdit={() => {}}
+                  onPriorityChange={() => {}}
+                  readOnly
+                />
               ))
             )}
           </Column>
@@ -341,7 +439,7 @@ function HistoricalDaySection({
 }
 
 export default function Home() {
-  const { dailyBoards, todayKey, isLoading, isOnline, addTask, moveTask, editTask, deleteTask } = useTasks();
+  const { dailyBoards, todayKey, isLoading, isOnline, addTask, moveTask, editTask, updatePriority, deleteTask } = useTasks();
   const { lastActivity, addActivity } = useActivity();
 
   const [showHistorical, setShowHistorical] = useState(false);
@@ -442,6 +540,16 @@ export default function Home() {
 
   async function handleEditTask(id: string, updates: { title: string; person: string; notes?: string }) {
     await editTask(id, updates);
+  }
+
+  async function handlePriorityChange(id: string, priority: Priority) {
+    const task = todayTasks.find((t) => t.id === id);
+    const updatedTask = await updatePriority(id, priority);
+    if (task && updatedTask && task.priority !== priority) {
+      const label =
+        priority === "high" ? "high" : priority === "medium" ? "medium" : priority === "low" ? "low" : "no";
+      addActivity(`${task.person} set "${task.title}" to ${label} priority`);
+    }
   }
 
   if (isLoading) {
@@ -565,7 +673,14 @@ export default function Home() {
               <div className={styles.columnEmpty}>No items</div>
             ) : (
               grouped[col.key].map((t) => (
-                <TaskCard key={t.id} task={t} onMove={handleMoveTask} onDelete={handleDeleteTask} onEdit={handleEditTask} />
+                <TaskCard
+                  key={t.id}
+                  task={t}
+                  onMove={handleMoveTask}
+                  onDelete={handleDeleteTask}
+                  onEdit={handleEditTask}
+                  onPriorityChange={handlePriorityChange}
+                />
               ))
             )}
           </Column>

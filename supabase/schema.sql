@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   person TEXT NOT NULL,
   notes TEXT,
   status TEXT NOT NULL CHECK (status IN ('doing', 'blocked', 'help', 'done')),
+  priority TEXT NOT NULL DEFAULT 'none' CHECK (priority IN ('none', 'low', 'medium', 'high')),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   date TEXT NOT NULL,
   continued BOOLEAN NOT NULL DEFAULT FALSE,

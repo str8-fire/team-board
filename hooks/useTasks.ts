@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import type { Task, Status, DailyBoard } from "@/lib/database.types";
+import type { Task, Status, Priority, DailyBoard } from "@/lib/database.types";
 
 const STORAGE_KEY = "workboard-daily-tasks";
 
@@ -100,6 +100,7 @@ async function loadFromLocalStorage(): Promise<DailyBoard> {
           created_at: t.created_at || t.updatedAt || now(),
           notes: t.notes || null,
           continued: t.continued || false,
+          priority: (t.priority as Priority) || "none",
         }));
       }
     } catch {
@@ -251,6 +252,7 @@ export function useTasks() {
         person,
         notes: notes || null,
         status: "doing",
+        priority: "none",
         updated_at: now(),
         date: todayKey,
         continued: false,
@@ -376,6 +378,45 @@ export function useTasks() {
     [todayKey, dailyBoards]
   );
 
+  const updatePriority = useCallback(
+    async (id: string, priority: Priority): Promise<Task | null> => {
+      const task = (dailyBoards[todayKey] || []).find((t) => t.id === id);
+      if (!task) return null;
+
+      const updatedTask = { ...task, priority, updated_at: now() };
+
+      setDailyBoards((prev) => ({
+        ...prev,
+        [todayKey]: (prev[todayKey] || []).map((t) =>
+          t.id === id ? updatedTask : t
+        ),
+      }));
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          const { error } = await supabase
+            .from("tasks")
+            .update({ priority, updated_at: now() })
+            .eq("id", id);
+          if (error) throw error;
+        } catch (error) {
+          console.error("Failed to update task priority in Supabase:", error);
+        }
+      } else {
+        const newBoards = {
+          ...dailyBoards,
+          [todayKey]: (dailyBoards[todayKey] || []).map((t) =>
+            t.id === id ? updatedTask : t
+          ),
+        };
+        saveToLocalStorage(newBoards);
+      }
+
+      return updatedTask;
+    },
+    [todayKey, dailyBoards]
+  );
+
   const deleteTask = useCallback(
     async (id: string): Promise<Task | null> => {
       const task = (dailyBoards[todayKey] || []).find((t) => t.id === id);
@@ -414,6 +455,7 @@ export function useTasks() {
     addTask,
     moveTask,
     editTask,
+    updatePriority,
     deleteTask,
   };
 }

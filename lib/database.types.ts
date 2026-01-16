@@ -1,4 +1,5 @@
 export type Status = "doing" | "blocked" | "help" | "done";
+export type Priority = "none" | "low" | "medium" | "high";
 
 export type Task = {
   id: string;
@@ -6,6 +7,7 @@ export type Task = {
   person: string;
   notes: string | null;
   status: Status;
+  priority: Priority;
   updated_at: string;
   date: string;
   continued: boolean;
@@ -28,6 +30,7 @@ export interface Database {
           person: string;
           notes: string | null;
           status: Status;
+          priority: Priority;
           updated_at: string;
           date: string;
           continued: boolean;
@@ -39,6 +42,7 @@ export interface Database {
           person: string;
           notes?: string | null;
           status: Status;
+          priority: Priority;
           updated_at: string;
           date: string;
           continued: boolean;
@@ -50,6 +54,7 @@ export interface Database {
           person?: string;
           notes?: string | null;
           status?: Status;
+          priority?: Priority;
           updated_at?: string;
           date?: string;
           continued?: boolean;
