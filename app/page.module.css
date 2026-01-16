@@ -25,6 +25,18 @@
   font-size: 18px;
 }
 
+.offlineBadge {
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(251, 191, 36, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
 .subtitle {
   margin-top: 6px;
   max-width: 560px;

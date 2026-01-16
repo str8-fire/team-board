@@ -1,29 +1,10 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useRef, useCallback } from "react";
 import styles from "./page.module.css";
-
-type Status = "doing" | "blocked" | "help" | "done";
-
-type Task = {
-  id: string;
-  title: string;
-  person: string;
-  notes?: string;
-  status: Status;
-  updatedAt: string;
-  date: string;
-  continued?: boolean;
-};
-
-type DailyBoard = {
-  [dateKey: string]: Task[];
-};
-
-type Activity = {
-  message: string;
-  at: string;
-};
+import { useTasks } from "@/hooks/useTasks";
+import { useActivity } from "@/hooks/useActivity";
+import type { Task, Status } from "@/lib/database.types";
 
 const COLUMNS: { key: Status; title: string }[] = [
   { key: "doing", title: "Doing" },
@@ -31,187 +12,6 @@ const COLUMNS: { key: Status; title: string }[] = [
   { key: "help", title: "Need Help" },
   { key: "done", title: "Completed" },
 ];
-
-const STORAGE_KEY = "workboard-daily-tasks";
-const ACTIVITY_KEY = "workboard-last-activity";
-
-const now = () => new Date().toLocaleString();
-
-function generateSampleData(): DailyBoard {
-  const today = new Date();
-  const todayKey = getDateKey(today);
-
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayKey = getDateKey(yesterday);
-
-  const twoDaysAgo = new Date(today);
-  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-  const twoDaysAgoKey = getDateKey(twoDaysAgo);
-
-  const threeDaysAgo = new Date(today);
-  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-  const threeDaysAgoKey = getDateKey(threeDaysAgo);
-
-  const formatDate = (date: Date) => date.toLocaleString();
-
-  return {
-    [threeDaysAgoKey]: [
-      {
-        id: "sample-1",
-        title: "Design new logo concepts",
-        person: "Wizard",
-        notes: "Need 3 variations",
-        status: "done",
-        updatedAt: formatDate(threeDaysAgo),
-        date: threeDaysAgoKey,
-        continued: false,
-      },
-      {
-        id: "sample-2",
-        title: "Review vendor contracts",
-        person: "T",
-        status: "blocked",
-        updatedAt: formatDate(threeDaysAgo),
-        date: threeDaysAgoKey,
-        continued: false,
-      },
-    ],
-    [twoDaysAgoKey]: [
-      {
-        id: "sample-2-carried-" + twoDaysAgoKey,
-        title: "Review vendor contracts",
-        person: "T",
-        status: "blocked",
-        updatedAt: formatDate(twoDaysAgo),
-        date: twoDaysAgoKey,
-        continued: true,
-      },
-      {
-        id: "sample-3",
-        title: "Update product descriptions",
-        person: "CS",
-        notes: "Focus on SEO keywords",
-        status: "doing",
-        updatedAt: formatDate(twoDaysAgo),
-        date: twoDaysAgoKey,
-        continued: false,
-      },
-      {
-        id: "sample-4",
-        title: "Send weekly newsletter",
-        person: "Marketing",
-        status: "done",
-        updatedAt: formatDate(twoDaysAgo),
-        date: twoDaysAgoKey,
-        continued: false,
-      },
-    ],
-    [yesterdayKey]: [
-      {
-        id: "sample-2-carried-" + yesterdayKey,
-        title: "Review vendor contracts",
-        person: "T",
-        status: "help",
-        updatedAt: formatDate(yesterday),
-        date: yesterdayKey,
-        continued: true,
-      },
-      {
-        id: "sample-3-carried-" + yesterdayKey,
-        title: "Update product descriptions",
-        person: "CS",
-        notes: "Focus on SEO keywords",
-        status: "doing",
-        updatedAt: formatDate(yesterday),
-        date: yesterdayKey,
-        continued: true,
-      },
-      {
-        id: "sample-5",
-        title: "Prepare Q1 report",
-        person: "Finance",
-        status: "done",
-        updatedAt: formatDate(yesterday),
-        date: yesterdayKey,
-        continued: false,
-      },
-      {
-        id: "sample-6",
-        title: "Fix checkout bug",
-        person: "Dev",
-        notes: "Payment gateway timeout issue",
-        status: "blocked",
-        updatedAt: formatDate(yesterday),
-        date: yesterdayKey,
-        continued: false,
-      },
-    ],
-    [todayKey]: [
-      {
-        id: "sample-2-carried-" + todayKey,
-        title: "Review vendor contracts",
-        person: "T",
-        status: "help",
-        updatedAt: formatDate(today),
-        date: todayKey,
-        continued: true,
-      },
-      {
-        id: "sample-3-carried-" + todayKey,
-        title: "Update product descriptions",
-        person: "CS",
-        notes: "Focus on SEO keywords",
-        status: "doing",
-        updatedAt: formatDate(today),
-        date: todayKey,
-        continued: true,
-      },
-      {
-        id: "sample-6-carried-" + todayKey,
-        title: "Fix checkout bug",
-        person: "Dev",
-        notes: "Payment gateway timeout issue",
-        status: "doing",
-        updatedAt: formatDate(today),
-        date: todayKey,
-        continued: true,
-      },
-      {
-        id: "sample-7",
-        title: "DNGR website edits",
-        person: "Wizard",
-        status: "doing",
-        updatedAt: formatDate(today),
-        date: todayKey,
-        continued: false,
-      },
-      {
-        id: "sample-8",
-        title: "Approve packaging colors",
-        person: "T",
-        status: "blocked",
-        updatedAt: formatDate(today),
-        date: todayKey,
-        continued: false,
-      },
-      {
-        id: "sample-9",
-        title: "Reply to customer emails",
-        person: "CS",
-        notes: "Refund + address changes",
-        status: "help",
-        updatedAt: formatDate(today),
-        date: todayKey,
-        continued: false,
-      },
-    ],
-  };
-}
-
-const getDateKey = (date: Date = new Date()) => {
-  return date.toISOString().split("T")[0];
-};
 
 const formatDateLabel = (dateKey: string) => {
   const date = new Date(dateKey + "T12:00:00");
@@ -248,6 +48,30 @@ const formatRelativeTime = (dateString: string) => {
   return `${diffDays} days ago`;
 };
 
+type UITask = {
+  id: string;
+  title: string;
+  person: string;
+  notes?: string;
+  status: Status;
+  updatedAt: string;
+  date: string;
+  continued?: boolean;
+};
+
+function toUITask(task: Task): UITask {
+  return {
+    id: task.id,
+    title: task.title,
+    person: task.person,
+    notes: task.notes || undefined,
+    status: task.status,
+    updatedAt: task.updated_at,
+    date: task.date,
+    continued: task.continued,
+  };
+}
+
 function Column({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className={styles.column}>
@@ -264,7 +88,7 @@ function TaskCard({
   onEdit,
   readOnly,
 }: {
-  task: Task;
+  task: UITask;
   onMove: (id: string, status: Status) => void;
   onDelete: (id: string) => void;
   onEdit: (id: string, updates: { title: string; person: string; notes?: string }) => void;
@@ -279,7 +103,7 @@ function TaskCard({
   const [editNotes, setEditNotes] = useState(task.notes || "");
   const notesRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isEditing) {
       setEditTitle(task.title);
       setEditPerson(task.person);
@@ -287,13 +111,13 @@ function TaskCard({
     }
   }, [task, isEditing]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isEditing) {
       setConfirmingDelete(false);
     }
   }, [isEditing]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const el = notesRef.current;
     if (!el) {
       setNotesTruncated(false);
@@ -488,10 +312,10 @@ function HistoricalDaySection({
   tasks,
 }: {
   dateKey: string;
-  tasks: Task[];
+  tasks: UITask[];
 }) {
   const grouped = useMemo(() => {
-    const map: Record<Status, Task[]> = { doing: [], blocked: [], help: [], done: [] };
+    const map: Record<Status, UITask[]> = { doing: [], blocked: [], help: [], done: [] };
     for (const t of tasks) map[t.status].push(t);
     return map;
   }, [tasks]);
@@ -516,88 +340,11 @@ function HistoricalDaySection({
   );
 }
 
-function getInitialState(): { todayKey: string; dateLabel: string; dailyBoards: DailyBoard } {
-  if (typeof window === "undefined") {
-    return { todayKey: "", dateLabel: "", dailyBoards: {} };
-  }
-
-  const currentDateKey = getDateKey();
-  const label = todayLabel();
-
-  const stored = localStorage.getItem(STORAGE_KEY);
-  let boards: DailyBoard = {};
-
-  if (stored) {
-    try {
-      boards = JSON.parse(stored);
-    } catch {
-      boards = {};
-    }
-  }
-
-  const totalTasks = Object.values(boards).reduce((sum, tasks) => sum + tasks.length, 0);
-
-  if (Object.keys(boards).length === 0 || totalTasks === 0) {
-    boards = generateSampleData();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(boards));
-    return { todayKey: currentDateKey, dateLabel: label, dailyBoards: boards };
-  }
-
-  const existingTodayTasks = boards[currentDateKey] || [];
-  const existingTodayTaskIds = new Set(existingTodayTasks.map((t) => t.id));
-  const carriedOverTasks: Task[] = [];
-
-  for (const dateKey of Object.keys(boards)) {
-    if (dateKey >= currentDateKey) continue;
-
-    const dayTasks = boards[dateKey];
-    for (const task of dayTasks) {
-      if (task.status !== "done") {
-        const carriedTaskId = `${task.id}-carried-${currentDateKey}`;
-        if (!existingTodayTaskIds.has(carriedTaskId)) {
-          const carriedTask: Task = {
-            ...task,
-            id: carriedTaskId,
-            date: currentDateKey,
-            continued: true,
-            updatedAt: now(),
-          };
-          carriedOverTasks.push(carriedTask);
-        }
-      }
-    }
-  }
-
-  if (carriedOverTasks.length > 0) {
-    boards[currentDateKey] = [...carriedOverTasks, ...existingTodayTasks];
-  } else if (!boards[currentDateKey]) {
-    boards[currentDateKey] = [];
-  }
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(boards));
-
-  return { todayKey: currentDateKey, dateLabel: label, dailyBoards: boards };
-}
-
-function getInitialActivity(): Activity | null {
-  if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem(ACTIVITY_KEY);
-  if (!stored) return null;
-  try {
-    return JSON.parse(stored) as Activity;
-  } catch {
-    return null;
-  }
-}
-
 export default function Home() {
-  const [state, setState] = useState<{ todayKey: string; dateLabel: string; dailyBoards: DailyBoard }>({
-    todayKey: "",
-    dateLabel: "",
-    dailyBoards: {},
-  });
+  const { dailyBoards, todayKey, isLoading, isOnline, addTask, moveTask, editTask, deleteTask } = useTasks();
+  const { lastActivity, addActivity } = useActivity();
+
   const [showHistorical, setShowHistorical] = useState(false);
-  const [hasMounted, setHasMounted] = useState(false);
   const [filterPerson, setFilterPerson] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -606,12 +353,11 @@ export default function Home() {
   const [notes, setNotes] = useState("");
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const personInputRef = useRef<HTMLInputElement | null>(null);
-  const [lastActivity, setLastActivity] = useState<Activity | null>(null);
 
-  const { todayKey, dateLabel, dailyBoards } = state;
+  const dateLabel = todayLabel();
 
   const todayTasks = useMemo(() => {
-    return dailyBoards[todayKey] || [];
+    return (dailyBoards[todayKey] || []).map(toUITask);
   }, [dailyBoards, todayKey]);
 
   const allPeople = useMemo(() => {
@@ -624,14 +370,15 @@ export default function Home() {
     return Array.from(people).sort((a, b) => a.localeCompare(b));
   }, [dailyBoards]);
 
-  const filterTasks = (tasks: Task[]) => {
+  const filterTasks = useCallback((tasks: UITask[]) => {
     if (filterPerson === "all") return tasks;
     return tasks.filter((task) => task.person === filterPerson);
-  };
+  }, [filterPerson]);
 
   const grouped = useMemo(() => {
-    const map: Record<Status, Task[]> = { doing: [], blocked: [], help: [], done: [] };
-    for (const t of filterTasks(todayTasks)) map[t.status].push(t);
+    const map: Record<Status, UITask[]> = { doing: [], blocked: [], help: [], done: [] };
+    const filtered = filterPerson === "all" ? todayTasks : todayTasks.filter((task) => task.person === filterPerson);
+    for (const t of filtered) map[t.status].push(t);
     return map;
   }, [todayTasks, filterPerson]);
 
@@ -649,32 +396,12 @@ export default function Home() {
     const done = allToday.filter((t) => t.status === "done").length;
     const active = Math.max(total - done, 0);
     if (total === 0) {
-      return "Today's focus: 0 tasks";
+      return "Todays focus: 0 tasks";
     }
-    return `Today's focus: ${active} active · ${blocked} blocked · ${help} needs help · ${done} completed`;
+    return `Todays focus: ${active} active · ${blocked} blocked · ${help} needs help · ${done} completed`;
   }, [dailyBoards, todayKey]);
 
-  useEffect(() => {
-    const initialState = getInitialState();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState(initialState);
-    setHasMounted(true);
-    setLastActivity(getInitialActivity());
-  }, []);
-
-  useEffect(() => {
-    if (hasMounted && todayKey) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(dailyBoards));
-    }
-  }, [dailyBoards, hasMounted, todayKey]);
-
-  const setActivity = (message: string) => {
-    const activity = { message, at: now() };
-    setLastActivity(activity);
-    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activity));
-  };
-
-  function addTask() {
+  async function handleAddTask() {
     const cleanTitle = title.trim();
     const cleanPerson = person.trim();
     if (!cleanTitle) {
@@ -686,77 +413,57 @@ export default function Home() {
       return;
     }
 
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      title: cleanTitle,
-      person: cleanPerson,
-      notes: notes.trim() || undefined,
-      status: "doing",
-      updatedAt: now(),
-      date: todayKey,
-      continued: false,
-    };
-
-    setState((prev) => ({
-      ...prev,
-      dailyBoards: {
-        ...prev.dailyBoards,
-        [todayKey]: [newTask, ...(prev.dailyBoards[todayKey] || [])],
-      },
-    }));
-    setActivity(`${cleanPerson} added "${cleanTitle}"`);
+    const newTask = await addTask(cleanTitle, cleanPerson, notes.trim() || undefined);
+    if (newTask) {
+      addActivity(`${cleanPerson} added "${cleanTitle}"`);
+    }
     setTitle("");
     setPerson("");
     setNotes("");
   }
 
-  function moveTask(id: string, status: Status) {
-    const task = (dailyBoards[todayKey] || []).find((t) => t.id === id);
-    setState((prev) => ({
-      ...prev,
-      dailyBoards: {
-        ...prev.dailyBoards,
-        [todayKey]: (prev.dailyBoards[todayKey] || []).map((t) =>
-          t.id === id ? { ...t, status, updatedAt: now() } : t
-        ),
-      },
-    }));
-    if (task && task.status !== status) {
+  async function handleMoveTask(id: string, status: Status) {
+    const task = todayTasks.find((t) => t.id === id);
+    const updatedTask = await moveTask(id, status);
+    if (task && updatedTask && task.status !== status) {
       const statusLabel =
         status === "doing" ? "Doing" : status === "blocked" ? "Blocked" : status === "help" ? "Need Help" : "Completed";
-      setActivity(`${task.person} moved "${task.title}" to ${statusLabel}`);
+      addActivity(`${task.person} moved "${task.title}" to ${statusLabel}`);
     }
   }
 
-  function deleteTask(id: string) {
-    const task = (dailyBoards[todayKey] || []).find((t) => t.id === id);
-    setState((prev) => ({
-      ...prev,
-      dailyBoards: {
-        ...prev.dailyBoards,
-        [todayKey]: (prev.dailyBoards[todayKey] || []).filter((t) => t.id !== id),
-      },
-    }));
-    if (task) {
-      setActivity(`${task.person} deleted "${task.title}"`);
+  async function handleDeleteTask(id: string) {
+    const task = todayTasks.find((t) => t.id === id);
+    const deletedTask = await deleteTask(id);
+    if (task && deletedTask) {
+      addActivity(`${task.person} deleted "${task.title}"`);
     }
   }
 
-  function editTask(id: string, updates: { title: string; person: string; notes?: string }) {
-    setState((prev) => ({
-      ...prev,
-      dailyBoards: {
-        ...prev.dailyBoards,
-        [todayKey]: (prev.dailyBoards[todayKey] || []).map((t) =>
-          t.id === id ? { ...t, ...updates, updatedAt: now() } : t
-        ),
-      },
-    }));
+  async function handleEditTask(id: string, updates: { title: string; person: string; notes?: string }) {
+    await editTask(id, updates);
+  }
+
+  if (isLoading) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.top}>
+          <div>
+            <h1 className={styles.title}>
+              Work
+              <br />
+              Board
+            </h1>
+            <div className={styles.badge}>Internal</div>
+          </div>
+          <div className={styles.subtitle}>Loading...</div>
+        </div>
+      </main>
+    );
   }
 
   return (
     <main className={styles.page}>
-      {/* Top header area */}
       <div className={styles.top}>
         <div>
           <h1 className={styles.title}>
@@ -765,6 +472,11 @@ export default function Home() {
             Board
           </h1>
           <div className={styles.badge}>Internal</div>
+          {!isOnline && (
+            <div className={styles.offlineBadge} title="Working offline - changes saved locally">
+              Offline
+            </div>
+          )}
         </div>
 
         <div>
@@ -773,14 +485,13 @@ export default function Home() {
             <div className={styles.contextPrimary}>{todaySummary}</div>
             <div className={styles.contextSecondary}>
               {lastActivity
-                ? `Last update: ${lastActivity.message} · ${formatRelativeTime(lastActivity.at)}`
+                ? `Last update: ${lastActivity.message} · ${formatRelativeTime(lastActivity.created_at)}`
                 : "Last update: No recent activity"}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Date row */}
       <div className={styles.dateRow}>
         <span className={styles.dateLabel}>{dateLabel}</span>
         <div className={styles.dateActions}>
@@ -847,7 +558,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Board */}
       <div className={styles.board}>
         {COLUMNS.map((col) => (
           <Column key={col.key} title={col.title}>
@@ -855,24 +565,26 @@ export default function Home() {
               <div className={styles.columnEmpty}>No items</div>
             ) : (
               grouped[col.key].map((t) => (
-                <TaskCard key={t.id} task={t} onMove={moveTask} onDelete={deleteTask} onEdit={editTask} />
+                <TaskCard key={t.id} task={t} onMove={handleMoveTask} onDelete={handleDeleteTask} onEdit={handleEditTask} />
               ))
             )}
           </Column>
         ))}
       </div>
 
-      {/* Historical tasks section */}
       {showHistorical && historicalDates.length > 0 && (
         <div className={styles.historicalSection}>
           <h2 className={styles.historicalTitle}>Historical Tasks</h2>
           {historicalDates.map((dateKey) => (
-            <HistoricalDaySection key={dateKey} dateKey={dateKey} tasks={filterTasks(dailyBoards[dateKey])} />
+            <HistoricalDaySection
+              key={dateKey}
+              dateKey={dateKey}
+              tasks={filterTasks((dailyBoards[dateKey] || []).map(toUITask))}
+            />
           ))}
         </div>
       )}
 
-      {/* Add task section (lower like your mock) */}
       <div className={styles.addSection} id="add-task">
         <h2 className={styles.addTitle}>Add a Task:</h2>
 
@@ -880,7 +592,7 @@ export default function Home() {
           className={styles.addForm}
           onSubmit={(e) => {
             e.preventDefault();
-            addTask();
+            handleAddTask();
           }}
         >
           <input
